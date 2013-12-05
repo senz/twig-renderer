@@ -1,0 +1,11 @@
+{
+    "name": "senz/twig-renderer",
+    "description": "Twig renderer for YII",
+    "homepage": "https://github.com/senz/twig-renderer",
+    "require": {
+        "php": ">=5.3.0"
+    },
+    "autoload": {
+        "classmap": ["ETwigViewRenderer.php"]
+    }
+}

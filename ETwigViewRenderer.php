@@ -12,10 +12,6 @@
 class ETwigViewRenderer extends CApplicationComponent implements IViewRenderer
 {
     /**
-     * @var string Path alias to Twig
-     */
-    public $twigPathAlias = 'application.vendor.Twig';
-    /**
      * @var string Twig template files extension
      */
     public $fileExtension = '.twig';
@@ -62,14 +58,15 @@ class ETwigViewRenderer extends CApplicationComponent implements IViewRenderer
      */
     public $lexerOptions = array();
 
+    public $globalAppEnabled = false;
+
+    public $globalCEnabled = false;
+
     private $_twig;
     private $_paths;
 
     function init()
     {
-        require Yii::getPathOfAlias($this->twigPathAlias).'/Autoloader.php';
-        Yii::registerAutoloader(array('Twig_Autoloader', 'autoload'), true);
-
         $app = Yii::app();
 
         /** @var $theme CTheme */
@@ -93,11 +90,15 @@ class ETwigViewRenderer extends CApplicationComponent implements IViewRenderer
         );
         $this->_twig = new Twig_Environment($loader, array_merge($defaultOptions, $this->options));
 
-        // Adding Yii::app() object to globals
-        $this->_twig->addGlobal('App', $app);
+        if ($this->globalAppEnabled) {
+            // Adding Yii::app() object to globals
+            $this->_twig->addGlobal('App', $app);
+        }
 
-        // Adding Yii's core static classes proxy as 'C' shortcut (usage: {{C.Html.tag(...)}})
-        $this->_twig->addGlobal('C', new ETwigViewRendererYiiCoreStaticClassesProxy());
+        if ($this->globalCEnabled) {
+            // Adding Yii's core static classes proxy as 'C' shortcut (usage: {{C.Html.tag(...)}})
+            $this->_twig->addGlobal('C', new ETwigViewRendererYiiCoreStaticClassesProxy());
+        }
 
         // Adding global 'void' function (usage: {{void(App.clientScript.registerScriptFile(...))}})
         // (@see ETwigViewRendererVoidFunction below for details)
