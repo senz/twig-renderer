@@ -58,8 +58,16 @@ class ETwigViewRenderer extends CApplicationComponent implements IViewRenderer
      */
     public $lexerOptions = array();
 
+    /**
+     * @var bool
+     * Adding Yii::app() object to globals
+     */
     public $globalAppEnabled = false;
 
+    /**
+     * @var bool
+     * Adding Yii's core static classes proxy as 'C' shortcut (usage: {{C.Html.tag(...)}})
+     */
     public $globalCEnabled = false;
 
     private $_twig;
@@ -88,12 +96,10 @@ class ETwigViewRenderer extends CApplicationComponent implements IViewRenderer
         $this->_twig = new Twig_Environment($loader, array_merge($defaultOptions, $this->options));
 
         if ($this->globalAppEnabled) {
-            // Adding Yii::app() object to globals
             $this->_twig->addGlobal('App', $app);
         }
 
         if ($this->globalCEnabled) {
-            // Adding Yii's core static classes proxy as 'C' shortcut (usage: {{C.Html.tag(...)}})
             $this->_twig->addGlobal('C', new ETwigViewRendererYiiCoreStaticClassesProxy());
         }
 
