@@ -63,7 +63,7 @@ class ETwigViewRenderer extends CApplicationComponent implements IViewRenderer
     public $globalCEnabled = false;
 
     private $_twig;
-    private $_paths;
+    private $_paths = array();
 
     function init()
     {
@@ -71,8 +71,6 @@ class ETwigViewRenderer extends CApplicationComponent implements IViewRenderer
 
         /** @var $theme CTheme */
         $theme = $app->getTheme();
-
-        $this->_paths = array();
 
         if ($theme !== null) {
             $this->_paths[] = $theme->getBasePath();
@@ -83,7 +81,6 @@ class ETwigViewRenderer extends CApplicationComponent implements IViewRenderer
         $loader = new Twig_Loader_Filesystem($this->_paths);
 
         $defaultOptions = array(
-            'autoescape' => false, // false because other way Twig escapes all HTML in templates
             'auto_reload' => true,
             'cache' => $app->getRuntimePath() . '/twig_cache/',
             'charset' => $app->charset,
@@ -128,6 +125,23 @@ class ETwigViewRenderer extends CApplicationComponent implements IViewRenderer
         return parent::init();
     }
 
+    public function setPathes(array $pathes)
+    {
+        $absolutePathes = array();
+        $theme = Yii::app()->getTheme();
+        if ($theme) {
+            $themePath = $theme->basePath;
+        }
+
+        foreach ($pathes as $path) {
+            if (isset($themePath)) {
+                $absolutePathes[] = $themePath . "/{$path}/";
+            }
+            $absolutePathes[] = Yii::app()->basePath . "/{$path}/";
+        }
+        $this->_paths = $absolutePathes;
+    }
+
     /**
      * Renders a view file.
      * This method is required by {@link IViewRenderer}.
@@ -141,6 +155,10 @@ class ETwigViewRenderer extends CApplicationComponent implements IViewRenderer
     {
         // current controller properties will be accessible as {{ this.property }}
         $data['this'] = $context;
+
+        if (strpos($sourceFile, $this->fileExtension) === false) {
+            $sourceFile .= $this->fileExtension;
+        }
 
         foreach($this->_paths as $path) {
             if(strpos($sourceFile, $path) === 0) {
