@@ -162,6 +162,18 @@ class ETwigViewRenderer extends CApplicationComponent implements IViewRenderer
         // current controller properties will be accessible as {{ this.property }}
         $data['this'] = $context;
 
+        $template = $this->loadTemplate($sourceFile);
+        $content = $template->render($data);
+
+        if ($return) {
+            return $content;
+        }
+
+        echo $content;
+    }
+
+    public function loadTemplate($sourceFile)
+    {
         if (strpos($sourceFile, $this->fileExtension) === false) {
             $sourceFile .= $this->fileExtension;
         }
@@ -172,13 +184,8 @@ class ETwigViewRenderer extends CApplicationComponent implements IViewRenderer
                 break;
             }
         }
-        $template = $this->_twig->loadTemplate($sourceFile)->render($data);
 
-        if ($return) {
-            return $template;
-        }
-
-        echo $template;
+        return $this->_twig->loadTemplate($sourceFile);
     }
 
     /**
