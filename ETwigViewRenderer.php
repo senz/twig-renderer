@@ -77,11 +77,15 @@ class ETwigViewRenderer extends CApplicationComponent implements IViewRenderer
     {
         $app = Yii::app();
 
-        /** @var $theme CTheme */
-        $theme = $app->getTheme();
+        // XXX app pathes inited here because application availability is guaranteed
 
-        if ($theme !== null) {
-            $this->_paths[] = $theme->getBasePath();
+        if ($app instanceof CWebApplication) {
+            /** @var $theme CTheme */
+            $theme = $app->getTheme();
+
+            if ($theme !== null) {
+                $this->_paths[] = $theme->getBasePath();
+            }
         }
 
         $this->_paths[] = $app->getBasePath();
@@ -93,6 +97,11 @@ class ETwigViewRenderer extends CApplicationComponent implements IViewRenderer
             'cache' => $app->getRuntimePath() . '/twig_cache/',
             'charset' => $app->charset,
         );
+
+        if (!empty($this->options['cache']) && true === $this->options['cache']) {
+            $this->options['cache'] = $app->getRuntimePath() . '/twig_cache/';
+        }
+
         $this->_twig = new Twig_Environment($loader, array_merge($defaultOptions, $this->options));
 
         if ($this->globalAppEnabled) {
@@ -131,13 +140,14 @@ class ETwigViewRenderer extends CApplicationComponent implements IViewRenderer
         return parent::init();
     }
 
+    public function getPathes()
+    {
+        return $this->_paths;
+    }
+
     public function setPathes(array $pathes)
     {
         $absolutePathes = array();
-        $theme = Yii::app()->getTheme();
-        if ($theme) {
-            $themePath = $theme->basePath;
-        }
 
         foreach ($pathes as $path) {
             if (isset($themePath)) {
