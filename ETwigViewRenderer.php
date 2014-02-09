@@ -72,6 +72,7 @@ class ETwigViewRenderer extends CApplicationComponent implements IViewRenderer
 
     private $_twig;
     private $_paths = array();
+    private $_absolutePaths = array();
 
     function init()
     {
@@ -79,18 +80,29 @@ class ETwigViewRenderer extends CApplicationComponent implements IViewRenderer
 
         // XXX app pathes inited here because application availability is guaranteed
 
+        $absolutePathes = [];
         if ($app instanceof CWebApplication) {
             /** @var $theme CTheme */
             $theme = $app->getTheme();
 
             if ($theme !== null) {
-                $this->_paths[] = $theme->getBasePath();
+                $absolutePathes[] = $theme->getBasePath();
             }
         }
 
-        $this->_paths[] = $app->getBasePath();
+        $absolutePathes = $this->generatePaths($app->basePath, $this->_paths);
+        $absolutePathes[] = $app->getBasePath();
 
-        $loader = new Twig_Loader_Filesystem($this->_paths);
+        foreach ($app->modules as $moduleId => $config) {
+            $module = $app->getModule($moduleId);
+            if ($module instanceof CWebModule) {
+                /** @var $module CWebModule */
+                $absolutePathes = array_merge($absolutePathes, $this->generatePaths($module->basePath, $this->_paths));
+            }
+        }
+
+        $this->_absolutePaths = $absolutePathes;
+        $loader = new Twig_Loader_Filesystem($absolutePathes);
 
         $defaultOptions = array(
             'auto_reload' => true,
@@ -147,15 +159,15 @@ class ETwigViewRenderer extends CApplicationComponent implements IViewRenderer
 
     public function setPathes(array $pathes)
     {
-        $absolutePathes = array();
+        $this->_paths = $pathes;
+    }
 
-        foreach ($pathes as $path) {
-            if (isset($themePath)) {
-                $absolutePathes[] = $themePath . "/{$path}/";
-            }
-            $absolutePathes[] = Yii::app()->basePath . "/{$path}/";
-        }
-        $this->_paths = $absolutePathes;
+    /**
+     * @return array
+     */
+    public function getAbsolutePaths()
+    {
+        return $this->_absolutePaths;
     }
 
     /**
@@ -188,7 +200,7 @@ class ETwigViewRenderer extends CApplicationComponent implements IViewRenderer
             $sourceFile .= $this->fileExtension;
         }
 
-        foreach($this->_paths as $path) {
+        foreach($this->_absolutePaths as $path) {
             if(strpos($sourceFile, $path) === 0) {
                 $sourceFile = substr($sourceFile, strlen($path));
                 break;
@@ -258,6 +270,18 @@ class ETwigViewRenderer extends CApplicationComponent implements IViewRenderer
     public function getTwig()
     {
         return $this->_twig;
+    }
+
+    private function generatePaths($basePath, $paths)
+    {
+        $absolutePathes = array();
+        foreach ($paths as $path) {
+            $absolutePath = $basePath . "/{$path}/";
+            if (file_exists($absolutePath)) {
+                $absolutePathes[] = $absolutePath;
+            }
+        }
+        return $absolutePathes;
     }
 
     /**
